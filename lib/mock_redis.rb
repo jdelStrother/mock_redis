@@ -65,6 +65,10 @@ class MockRedis
     options[:db]
   end
 
+  def logger
+    options[:logger]
+  end
+
   def time_at(timestamp)
     options[:time_class].at(timestamp)
   end

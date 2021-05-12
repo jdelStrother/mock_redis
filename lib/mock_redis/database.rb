@@ -15,17 +15,29 @@ require 'mock_redis/connection_method'
 
 class MockRedis
   class Database
-    include HashMethods
-    include ListMethods
-    include SetMethods
-    include StringMethods
-    include ZsetMethods
-    include SortMethod
-    include InfoMethod
-    include UtilityMethods
-    include GeospatialMethods
-    include StreamMethods
-    include ConnectionMethod
+    [
+      HashMethods,
+      ListMethods,
+      SetMethods,
+      StringMethods,
+      ZsetMethods,
+      SortMethod,
+      InfoMethod,
+      UtilityMethods,
+      GeospatialMethods,
+      StreamMethods,
+      ConnectionMethod
+    ].each do |mod|
+      include mod
+
+      mod.public_instance_methods(false).each do |m|
+        define_method m do |*args, &block|
+          logging([[m, *args]]) do
+            super(*args, &block)
+          end
+        end
+      end
+    end
 
     attr_reader :data, :expire_times
 
@@ -367,6 +379,31 @@ class MockRedis
 
       to_delete.each do |(_time, key)|
         del(key)
+      end
+    end
+
+    def logging(commands)
+      logger = @base&.logger
+      return yield unless logger&.debug?
+
+      begin
+        commands.each do |name, *args|
+          logged_args = args.map do |a|
+            if a.respond_to?(:inspect) then a.inspect
+            elsif a.respond_to?(:to_s) then a.to_s
+            else
+              # handle poorly-behaved descendants of BasicObject
+              klass = a.instance_exec { (class << self; self end).superclass }
+              "\#<#{klass}:#{a.__id__}>"
+            end
+          end
+          logger.debug("[MockRedis] command=#{name.to_s.upcase} args=#{logged_args.join(' ')}")
+        end
+
+        t1 = Time.now
+        yield
+      ensure
+        logger.debug("[MockRedis] call_time=%0.2f ms" % ((Time.now - t1) * 1000)) if t1
       end
     end
   end

@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe '#scan' do
-  subject { MockRedis::Database.new(self) }
+  subject { MockRedis::Database.new(double('base', logger: nil)) }
 
   let(:count) { 10 }
   let(:match) { '*' }

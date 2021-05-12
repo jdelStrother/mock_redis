@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe '#sscan_each' do
-  subject { MockRedis::Database.new(self) }
+  subject { MockRedis::Database.new(double('base', logger: nil)) }
 
   let(:key) { 'mock-redis-test:sscan_each' }
 
