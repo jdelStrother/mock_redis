@@ -50,7 +50,7 @@ class MockRedis
     # will be passed to `#expire` without keywords transformation.
     def call(*command, &_block)
       # allow for single array argument or multiple arguments
-      command = command[0] if command.length == 1
+      command = command[0] if command.length == 1 && command[0].is_a?(Array)
 
       if command[0].downcase.to_s.include?('expire')
         send_expires(command)
