@@ -157,5 +157,70 @@ class MockRedis
       when :commandstats; COMMAND_STATS_SOLO_INFO
       end
     end
+
+    # Format info hash as raw string (used by call("info"))
+    def info_raw(section = 'default')
+      section_sym = section.to_s.to_sym
+
+      sections = case section_sym
+                 when :default
+                   [
+                     ['Server', SERVER_INFO],
+                     ['Clients', CLIENTS_INFO],
+                     ['Memory', MEMORY_INFO],
+                     ['Persistence', PERSISTENCE_INFO],
+                     ['Stats', STATS_INFO],
+                     ['Replication', REPLICATION_INFO],
+                     ['CPU', CPU_INFO],
+                     ['Keyspace', KEYSPACE_INFO]
+                   ]
+                 when :all
+                   [
+                     ['Server', SERVER_INFO],
+                     ['Clients', CLIENTS_INFO],
+                     ['Memory', MEMORY_INFO],
+                     ['Persistence', PERSISTENCE_INFO],
+                     ['Stats', STATS_INFO],
+                     ['Replication', REPLICATION_INFO],
+                     ['CPU', CPU_INFO],
+                     ['Commandstats', COMMAND_STATS_COMBINED_INFO],
+                     ['Keyspace', KEYSPACE_INFO]
+                   ]
+                 when :server
+                   [['Server', SERVER_INFO]]
+                 when :clients
+                   [['Clients', CLIENTS_INFO]]
+                 when :memory
+                   [['Memory', MEMORY_INFO]]
+                 when :persistence
+                   [['Persistence', PERSISTENCE_INFO]]
+                 when :stats
+                   [['Stats', STATS_INFO]]
+                 when :replication
+                   [['Replication', REPLICATION_INFO]]
+                 when :cpu
+                   [['CPU', CPU_INFO]]
+                 when :keyspace
+                   [['Keyspace', KEYSPACE_INFO]]
+                 when :commandstats
+                   [['Commandstats', COMMAND_STATS_COMBINED_INFO]]
+                 else
+                   [['Server', SERVER_INFO]]
+                 end
+
+      sections.map do |name, data|
+        lines = ["# #{name}"]
+        data.each do |key, value|
+          if value.is_a?(Hash)
+            # For commandstats nested hashes
+            formatted = value.map { |k, v| "#{k}=#{v}" }.join(',')
+            lines << "#{key}:#{formatted}"
+          else
+            lines << "#{key}:#{value}"
+          end
+        end
+        lines.join("\n")
+      end.join("\n\n") + "\n"
+    end
   end
 end

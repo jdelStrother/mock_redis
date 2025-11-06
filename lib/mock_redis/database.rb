@@ -52,10 +52,15 @@ class MockRedis
       # allow for single array argument or multiple arguments
       command = command[0] if command.length == 1 && command[0].is_a?(Array)
 
-      if command[0].downcase.to_s.include?('expire')
+      cmd_name = command[0].downcase.to_s
+
+      if cmd_name.include?('expire')
         send_expires(command)
+      elsif cmd_name == 'info'
+        # INFO command returns raw string, not parsed hash
+        info_raw(*command[1..])
       else
-        public_send(command[0].downcase, *command[1..])
+        public_send(cmd_name, *command[1..])
       end
     end
 
